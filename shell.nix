@@ -5,6 +5,7 @@
     libPath = with pkgs; lib.makeLibraryPath [
       libxkbcommon
       libGL
+      vulkan-loader
     ];
 in
   pkgs.mkShell rec {
@@ -18,6 +19,9 @@ in
       pkg-config
       wayland-scanner
       kdePackages.wayland-protocols
+      vulkan-tools
+      spirv-tools
+      shaderc
     ];
 
     buildInputs = with pkgs; [
