@@ -1,0 +1,14 @@
+[package]
+name = "learnvulkan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ash = "0.38.0"
+
+[dependencies.glfw]
+version = "0.58.0"
+features = [
+  "vulkan",
+  "wayland",
+]
