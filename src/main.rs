@@ -1,6 +1,7 @@
 use ash::{vk::make_api_version, Entry};
 use debug_layer::DebugLayer;
 use instance::Instance;
+use logical_device::LogicalDevice;
 use physical_device::PhysicalDevice;
 use utils::{check_validation_layer_support, print_available_extensions};
 use window::Window;
@@ -11,6 +12,7 @@ pub const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 
 pub mod debug_layer;
 pub mod instance;
+pub mod logical_device;
 pub mod physical_device;
 pub mod utils;
 pub mod window;
@@ -25,6 +27,7 @@ pub struct HelloTriangleApplication {
     instance: Instance,
     debug_layer: Option<DebugLayer>,
     physical_device: PhysicalDevice,
+    logical_device: LogicalDevice,
 }
 
 impl HelloTriangleApplication {
@@ -55,11 +58,14 @@ impl HelloTriangleApplication {
 
         let physical_device = PhysicalDevice::new(instance.clone()).unwrap();
 
+        let logical_device = LogicalDevice::new(physical_device.clone()).unwrap();
+
         Self {
             window,
             instance,
             debug_layer,
             physical_device,
+            logical_device,
         }
     }
 
@@ -73,6 +79,10 @@ impl HelloTriangleApplication {
 
     pub fn physical_device(&self) -> &PhysicalDevice {
         &self.physical_device
+    }
+
+    pub fn logical_device(&self) -> &LogicalDevice {
+        &self.logical_device
     }
 
     pub fn run(&mut self) {
