@@ -46,13 +46,13 @@ impl PhysicalDevice {
     }
 }
 
-pub struct InnerPhysicalDevice {
+struct InnerPhysicalDevice {
     instance: Instance,
     physical_device: vk::PhysicalDevice,
     graphics_family: usize,
 }
 
-pub fn find_queue_families(instance: &Instance, device: vk::PhysicalDevice) -> Option<usize> {
+fn find_queue_families(instance: &Instance, device: vk::PhysicalDevice) -> Option<usize> {
     let queue_family = unsafe {
         instance
             .instance()
