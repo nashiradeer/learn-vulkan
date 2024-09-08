@@ -44,6 +44,10 @@ impl PhysicalDevice {
     pub fn graphics_family(&self) -> usize {
         self.0.graphics_family
     }
+
+    pub fn graphics_family_u32(&self) -> u32 {
+        self.0.graphics_family.try_into().unwrap()
+    }
 }
 
 struct InnerPhysicalDevice {
