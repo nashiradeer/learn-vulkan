@@ -12,6 +12,7 @@ use std::{ffi::c_void, rc::Rc};
 use crate::instance::Instance;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct DebugLayer(Rc<InnerDebugLayer>);
 
 impl DebugLayer {
@@ -28,16 +29,14 @@ impl DebugLayer {
             instance,
         })))
     }
-
-    pub fn instance(&self) -> &Instance {
-        &self.0.instance
-    }
 }
 
 struct InnerDebugLayer {
-    instance: Instance,
     debug_instance: debug_utils::Instance,
     debug_messenger: DebugUtilsMessengerEXT,
+
+    #[allow(dead_code)]
+    instance: Instance,
 }
 
 impl Drop for InnerDebugLayer {
