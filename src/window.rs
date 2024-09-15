@@ -1,9 +1,14 @@
 use std::{
     cell::RefCell,
     fmt::{self},
+    ptr::null,
     rc::Rc,
 };
 
+use ash::{
+    prelude::VkResult,
+    vk::{Instance, SurfaceKHR},
+};
 use glfw::{fail_on_errors, ClientApiHint, Glfw, InitError, PWindow, WindowHint, WindowMode};
 
 #[derive(Debug, Clone)]
@@ -32,10 +37,22 @@ impl Window {
         self.0.borrow().glfw.get_required_instance_extensions()
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&self) {
         while !self.0.borrow().window.should_close() {
             self.0.borrow_mut().glfw.poll_events();
         }
+    }
+
+    pub(crate) unsafe fn create_window_surface(&self, instance: Instance) -> VkResult<SurfaceKHR> {
+        let window = &self.0.borrow_mut().window;
+
+        let mut surface = SurfaceKHR::null();
+
+        window
+            .create_window_surface(instance, null(), &mut surface)
+            .result()?;
+
+        Ok(surface)
     }
 }
 

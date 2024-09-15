@@ -3,6 +3,7 @@ use debug_layer::DebugLayer;
 use instance::Instance;
 use logical_device::LogicalDevice;
 use physical_device::PhysicalDevice;
+use surface::Surface;
 use utils::{check_validation_layer_support, print_available_extensions};
 use window::Window;
 
@@ -10,23 +11,35 @@ pub const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
 
 pub const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 
-pub mod debug_layer;
-pub mod instance;
-pub mod logical_device;
-pub mod physical_device;
-pub mod utils;
-pub mod window;
+mod debug_layer;
+mod instance;
+mod logical_device;
+mod physical_device;
+mod surface;
+mod utils;
+mod window;
 
 fn main() {
     let mut app = HelloTriangleApplication::new();
     app.run();
 }
 
-pub struct HelloTriangleApplication {
+struct HelloTriangleApplication {
     window: Window,
+
+    #[allow(dead_code)]
     instance: Instance,
+
+    #[allow(dead_code)]
     debug_layer: Option<DebugLayer>,
+
+    #[allow(dead_code)]
+    surface: Surface,
+
+    #[allow(dead_code)]
     physical_device: PhysicalDevice,
+
+    #[allow(dead_code)]
     logical_device: LogicalDevice,
 }
 
@@ -56,7 +69,9 @@ impl HelloTriangleApplication {
             debug_layer = Some(DebugLayer::new(instance.clone()).unwrap());
         }
 
-        let physical_device = PhysicalDevice::new(instance.clone()).unwrap();
+        let surface = Surface::new(instance.clone(), window.clone()).unwrap();
+
+        let physical_device = PhysicalDevice::new(instance.clone(), &surface).unwrap();
 
         let logical_device = LogicalDevice::new(physical_device.clone()).unwrap();
 
@@ -64,25 +79,10 @@ impl HelloTriangleApplication {
             window,
             instance,
             debug_layer,
+            surface,
             physical_device,
             logical_device,
         }
-    }
-
-    pub fn instance(&self) -> &Instance {
-        &self.instance
-    }
-
-    pub fn debug_layer(&self) -> &Option<DebugLayer> {
-        &self.debug_layer
-    }
-
-    pub fn physical_device(&self) -> &PhysicalDevice {
-        &self.physical_device
-    }
-
-    pub fn logical_device(&self) -> &LogicalDevice {
-        &self.logical_device
     }
 
     pub fn run(&mut self) {
