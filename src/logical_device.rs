@@ -51,6 +51,10 @@ impl LogicalDevice {
             queue,
         })))
     }
+
+    pub fn device(&self) -> &Device {
+        &self.0.device
+    }
 }
 
 fn create_queue_create_infos<'a>(

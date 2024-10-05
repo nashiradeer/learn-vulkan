@@ -1,9 +1,11 @@
 use ash::{vk::make_api_version, Entry};
 use debug_layer::DebugLayer;
+use image_views::ImageViews;
 use instance::Instance;
 use logical_device::LogicalDevice;
 use physical_device::PhysicalDevice;
 use surface::Surface;
+use swapchain::Swapchain;
 use utils::{check_validation_layer_support, print_available_extensions};
 use window::Window;
 
@@ -12,10 +14,12 @@ pub const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
 pub const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 
 mod debug_layer;
+mod image_views;
 mod instance;
 mod logical_device;
 mod physical_device;
 mod surface;
+mod swapchain;
 mod utils;
 mod window;
 
@@ -41,6 +45,12 @@ struct HelloTriangleApplication {
 
     #[allow(dead_code)]
     logical_device: LogicalDevice,
+
+    #[allow(dead_code)]
+    swapchain: Swapchain,
+
+    #[allow(dead_code)]
+    image_views: ImageViews,
 }
 
 impl HelloTriangleApplication {
@@ -75,6 +85,16 @@ impl HelloTriangleApplication {
 
         let logical_device = LogicalDevice::new(physical_device.clone()).unwrap();
 
+        let swapchain = Swapchain::new(
+            physical_device.clone(),
+            logical_device.clone(),
+            surface.clone(),
+            &window,
+        )
+        .unwrap();
+
+        let image_views = ImageViews::new(&swapchain, logical_device.clone()).unwrap();
+
         Self {
             window,
             instance,
@@ -82,6 +102,8 @@ impl HelloTriangleApplication {
             surface,
             physical_device,
             logical_device,
+            swapchain,
+            image_views,
         }
     }
 

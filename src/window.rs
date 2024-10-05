@@ -54,6 +54,10 @@ impl Window {
 
         Ok(surface)
     }
+
+    pub fn get_framebuffer_size(&self) -> (i32, i32) {
+        self.0.borrow().window.get_framebuffer_size()
+    }
 }
 
 #[derive(Debug)]
