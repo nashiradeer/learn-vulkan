@@ -10,7 +10,8 @@ use ash::{
 
 use crate::{logical_device::LogicalDevice, swapchain::Swapchain};
 
-pub struct ImageViews(#[allow(dead_code)] Rc<InnerImageViews>);
+#[derive(Clone)]
+pub struct ImageViews(Rc<InnerImageViews>);
 
 impl ImageViews {
     pub fn new(swapchain: &Swapchain, logical_device: LogicalDevice) -> VkResult<Self> {
@@ -31,6 +32,10 @@ impl ImageViews {
             image_views,
             logical_device,
         })))
+    }
+
+    pub fn image_views(&self) -> &[ImageView] {
+        &self.0.image_views
     }
 }
 

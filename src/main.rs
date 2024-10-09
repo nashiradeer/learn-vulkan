@@ -1,5 +1,6 @@
 use ash::{vk::make_api_version, Entry};
 use debug_layer::DebugLayer;
+use framebuffers::Framebuffers;
 use graphics_pipeline::GraphicsPipeline;
 use image_views::ImageViews;
 use instance::Instance;
@@ -19,6 +20,7 @@ const SHADER_VERT: &[u8; 1504] = include_bytes!("../shaders/vert.spv");
 const SHADER_FRAG: &[u8; 572] = include_bytes!("../shaders/frag.spv");
 
 mod debug_layer;
+mod framebuffers;
 mod graphics_pipeline;
 mod image_views;
 mod instance;
@@ -62,6 +64,9 @@ struct HelloTriangleApplication {
 
     #[allow(dead_code)]
     graphics_pipeline: GraphicsPipeline,
+
+    #[allow(dead_code)]
+    framebuffers: Framebuffers,
 }
 
 impl HelloTriangleApplication {
@@ -110,6 +115,8 @@ impl HelloTriangleApplication {
 
         let graphics_pipeline = GraphicsPipeline::new(render_pass.clone()).unwrap();
 
+        let framebuffers = Framebuffers::new(render_pass.clone(), image_views.clone()).unwrap();
+
         Self {
             window,
             instance,
@@ -120,6 +127,7 @@ impl HelloTriangleApplication {
             swapchain,
             image_views,
             graphics_pipeline,
+            framebuffers,
         }
     }
 
