@@ -8,7 +8,7 @@ use ash::{
 use crate::{image_views::ImageViews, render_pass::RenderPass};
 
 #[derive(Clone)]
-pub struct Framebuffers(#[allow(dead_code)] Rc<InnerFramebuffers>);
+pub struct Framebuffers(Rc<InnerFramebuffers>);
 
 impl Framebuffers {
     pub fn new(render_pass: RenderPass, image_views: ImageViews) -> VkResult<Self> {
@@ -40,6 +40,14 @@ impl Framebuffers {
             render_pass,
             image_views,
         })))
+    }
+
+    pub fn framebuffers(&self) -> &[Framebuffer] {
+        &self.0.framebuffers
+    }
+
+    pub fn render_pass(&self) -> &RenderPass {
+        &self.0.render_pass
     }
 }
 

@@ -7,7 +7,8 @@ use ash::{
 
 use crate::{logical_device::LogicalDevice, physical_device::PhysicalDevice};
 
-pub struct CommandPool(#[allow(dead_code)] Rc<InnerCommandPool>);
+#[derive(Clone)]
+pub struct CommandPool(Rc<InnerCommandPool>);
 
 impl CommandPool {
     pub fn new(logical_device: LogicalDevice, physical_device: &PhysicalDevice) -> VkResult<Self> {
@@ -25,6 +26,14 @@ impl CommandPool {
             command_pool,
             logical_device,
         })))
+    }
+
+    pub fn command_pool(&self) -> &vk::CommandPool {
+        &self.0.command_pool
+    }
+
+    pub fn logical_device(&self) -> &LogicalDevice {
+        &self.0.logical_device
     }
 }
 

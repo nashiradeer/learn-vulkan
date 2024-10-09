@@ -17,7 +17,7 @@ use ash::{
 use crate::{render_pass::RenderPass, shader_module::ShaderModule, SHADER_FRAG, SHADER_VERT};
 
 #[derive(Clone)]
-pub struct GraphicsPipeline(#[allow(dead_code)] Rc<InnerGraphicsPipeline>);
+pub struct GraphicsPipeline(Rc<InnerGraphicsPipeline>);
 
 impl GraphicsPipeline {
     pub fn new(render_pass: RenderPass) -> VkResult<Self> {
@@ -58,7 +58,7 @@ impl GraphicsPipeline {
             .topology(PrimitiveTopology::TRIANGLE_LIST)
             .primitive_restart_enable(false);
 
-        let viewports = [Viewport::default()
+        let viewports = vec![Viewport::default()
             .x(0.0)
             .y(0.0)
             .height(render_pass.swapchain().extent().height as f32)
@@ -66,7 +66,7 @@ impl GraphicsPipeline {
             .min_depth(0.0)
             .max_depth(1.0)];
 
-        let scissors = [Rect2D::default()
+        let scissors = vec![Rect2D::default()
             .extent(render_pass.swapchain().extent())
             .offset(Offset2D::default().x(0).y(0))];
 
@@ -127,16 +127,36 @@ impl GraphicsPipeline {
         };
 
         Ok(GraphicsPipeline(Rc::new(InnerGraphicsPipeline {
+            viewports,
+            scissors,
             pipeline_layout,
             pipeline,
             render_pass,
         })))
+    }
+
+    pub fn pipeline(&self) -> &[Pipeline] {
+        &self.0.pipeline
+    }
+
+    pub fn viewports(&self) -> &[Viewport] {
+        &self.0.viewports
+    }
+
+    pub fn scissors(&self) -> &[Rect2D] {
+        &self.0.scissors
+    }
+
+    pub fn render_pass(&self) -> &RenderPass {
+        &self.0.render_pass
     }
 }
 
 struct InnerGraphicsPipeline {
     pipeline_layout: PipelineLayout,
     pipeline: Vec<Pipeline>,
+    viewports: Vec<Viewport>,
+    scissors: Vec<Rect2D>,
 
     #[allow(dead_code)]
     render_pass: RenderPass,
