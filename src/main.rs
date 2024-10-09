@@ -1,5 +1,5 @@
 use ash::{vk::make_api_version, Entry};
-use command_buffer::CommandBuffers;
+use command_buffers::CommandBuffers;
 use command_pool::CommandPool;
 use debug_layer::DebugLayer;
 use framebuffers::Framebuffers;
@@ -21,7 +21,7 @@ const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 const SHADER_VERT: &[u8; 1504] = include_bytes!("../shaders/vert.spv");
 const SHADER_FRAG: &[u8; 572] = include_bytes!("../shaders/frag.spv");
 
-mod command_buffer;
+mod command_buffers;
 mod command_pool;
 mod debug_layer;
 mod framebuffers;
