@@ -1,4 +1,5 @@
 use ash::{vk::make_api_version, Entry};
+use command_pool::CommandPool;
 use debug_layer::DebugLayer;
 use framebuffers::Framebuffers;
 use graphics_pipeline::GraphicsPipeline;
@@ -19,6 +20,7 @@ const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 const SHADER_VERT: &[u8; 1504] = include_bytes!("../shaders/vert.spv");
 const SHADER_FRAG: &[u8; 572] = include_bytes!("../shaders/frag.spv");
 
+mod command_pool;
 mod debug_layer;
 mod framebuffers;
 mod graphics_pipeline;
@@ -67,6 +69,9 @@ struct HelloTriangleApplication {
 
     #[allow(dead_code)]
     framebuffers: Framebuffers,
+
+    #[allow(dead_code)]
+    command_pool: CommandPool,
 }
 
 impl HelloTriangleApplication {
@@ -117,6 +122,8 @@ impl HelloTriangleApplication {
 
         let framebuffers = Framebuffers::new(render_pass.clone(), image_views.clone()).unwrap();
 
+        let command_pool = CommandPool::new(logical_device.clone(), &physical_device).unwrap();
+
         Self {
             window,
             instance,
@@ -128,6 +135,7 @@ impl HelloTriangleApplication {
             image_views,
             graphics_pipeline,
             framebuffers,
+            command_pool,
         }
     }
 
