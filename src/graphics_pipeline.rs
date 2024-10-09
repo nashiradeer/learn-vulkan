@@ -1,7 +1,8 @@
-use std::{ffi::CString, rc::Rc};
+use std::{ffi::CString, io::Cursor, rc::Rc};
 
 use ash::{
     prelude::VkResult,
+    util::read_spv,
     vk::{
         ColorComponentFlags, CullModeFlags, DynamicState, FrontFace, GraphicsPipelineCreateInfo,
         Offset2D, Pipeline, PipelineCache, PipelineColorBlendAttachmentState,
@@ -24,12 +25,12 @@ impl GraphicsPipeline {
         let shader_modules = [
             ShaderModule::new(
                 render_pass.swapchain().device().clone(),
-                &SHADER_VERT.map(Into::<u32>::into),
+                &read_spv(&mut Cursor::new(SHADER_VERT)).unwrap(),
             )
             .unwrap(),
             ShaderModule::new(
                 render_pass.swapchain().device().clone(),
-                &SHADER_FRAG.map(Into::<u32>::into),
+                &read_spv(&mut Cursor::new(SHADER_FRAG)).unwrap(),
             )
             .unwrap(),
         ];
@@ -145,10 +146,6 @@ impl GraphicsPipeline {
 
     pub fn scissors(&self) -> &[Rect2D] {
         &self.0.scissors
-    }
-
-    pub fn render_pass(&self) -> &RenderPass {
-        &self.0.render_pass
     }
 }
 

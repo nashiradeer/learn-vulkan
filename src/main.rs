@@ -1,4 +1,7 @@
-use ash::{vk::make_api_version, Entry};
+use ash::{
+    vk::{make_api_version, PipelineStageFlags, SubmitInfo},
+    Entry,
+};
 use command_buffers::CommandBuffers;
 use command_pool::CommandPool;
 use debug_layer::DebugLayer;
@@ -11,6 +14,7 @@ use physical_device::PhysicalDevice;
 use render_pass::RenderPass;
 use surface::Surface;
 use swapchain::Swapchain;
+use sync_objects::SyncObjects;
 use utils::{check_validation_layer_support, print_available_extensions};
 use window::Window;
 
@@ -34,6 +38,7 @@ mod render_pass;
 mod shader_module;
 mod surface;
 mod swapchain;
+mod sync_objects;
 mod utils;
 mod window;
 
@@ -44,39 +49,13 @@ fn main() {
 
 struct HelloTriangleApplication {
     window: Window,
-
-    #[allow(dead_code)]
-    instance: Instance,
+    logical_device: LogicalDevice,
+    swapchain: Swapchain,
+    command_buffers: CommandBuffers,
+    sync_objects: SyncObjects,
 
     #[allow(dead_code)]
     debug_layer: Option<DebugLayer>,
-
-    #[allow(dead_code)]
-    surface: Surface,
-
-    #[allow(dead_code)]
-    physical_device: PhysicalDevice,
-
-    #[allow(dead_code)]
-    logical_device: LogicalDevice,
-
-    #[allow(dead_code)]
-    swapchain: Swapchain,
-
-    #[allow(dead_code)]
-    image_views: ImageViews,
-
-    #[allow(dead_code)]
-    graphics_pipeline: GraphicsPipeline,
-
-    #[allow(dead_code)]
-    framebuffers: Framebuffers,
-
-    #[allow(dead_code)]
-    command_pool: CommandPool,
-
-    #[allow(dead_code)]
-    command_buffers: CommandBuffers,
 }
 
 impl HelloTriangleApplication {
@@ -89,7 +68,7 @@ impl HelloTriangleApplication {
 
         print_available_extensions(&entry);
 
-        let window = Window::new("Vulkan", glfw::WindowMode::Windowed, 800, 600).unwrap();
+        let window = Window::new("Vulkan", glfw::WindowMode::Windowed, 600, 800).unwrap();
         let instance = Instance::new(
             entry,
             window.get_required_instance_extensions().unwrap(),
@@ -136,23 +115,75 @@ impl HelloTriangleApplication {
         )
         .unwrap();
 
+        let sync_objects = SyncObjects::new(logical_device.clone()).unwrap();
+
         Self {
             window,
-            instance,
-            debug_layer,
-            surface,
-            physical_device,
             logical_device,
             swapchain,
-            image_views,
-            graphics_pipeline,
-            framebuffers,
-            command_pool,
             command_buffers,
+            sync_objects,
+            debug_layer,
         }
     }
 
+    pub fn draw_frame(&mut self) {
+        self.sync_objects.wait_in_flight_fence().unwrap();
+
+        self.sync_objects.reset_in_flight_fence().unwrap();
+
+        let (image_index, _) = self
+            .swapchain
+            .acquire_next_image(
+                u64::MAX,
+                Some(*self.sync_objects.image_available_semaphore()),
+                None,
+            )
+            .unwrap();
+
+        self.command_buffers.reset().unwrap();
+
+        self.command_buffers
+            .record(0, image_index.try_into().unwrap(), 0, 0, 0)
+            .unwrap();
+
+        let wait_semaphores = [*self.sync_objects.image_available_semaphore()];
+        let signal_semaphores = [*self.sync_objects.render_finished_semaphore()];
+
+        let wait_stages = [PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
+
+        let submit_info = SubmitInfo::default()
+            .wait_semaphores(&wait_semaphores)
+            .wait_dst_stage_mask(&wait_stages)
+            .command_buffers(self.command_buffers.command_buffers())
+            .signal_semaphores(&signal_semaphores);
+
+        let submit_infos = [submit_info];
+
+        unsafe {
+            self.logical_device
+                .device()
+                .queue_submit(
+                    *self.logical_device.queue(),
+                    &submit_infos,
+                    *self.sync_objects.in_flight_fence(),
+                )
+                .unwrap();
+        }
+
+        let image_indices = [image_index.try_into().unwrap()];
+
+        self.swapchain
+            .queue_present(&signal_semaphores, &image_indices)
+            .unwrap();
+    }
+
     pub fn run(&mut self) {
-        self.window.run();
+        while !self.window.should_close() {
+            self.window.poll_events();
+            self.draw_frame();
+        }
+
+        self.logical_device.wait_idle().unwrap();
     }
 }

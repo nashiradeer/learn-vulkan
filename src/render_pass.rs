@@ -3,8 +3,10 @@ use std::rc::Rc;
 use ash::{
     prelude::VkResult,
     vk::{
-        self, AttachmentDescription, AttachmentLoadOp, AttachmentReference, AttachmentStoreOp,
-        ImageLayout, PipelineBindPoint, RenderPassCreateInfo, SampleCountFlags, SubpassDescription,
+        self, AccessFlags, AttachmentDescription, AttachmentLoadOp, AttachmentReference,
+        AttachmentStoreOp, ImageLayout, PipelineBindPoint, PipelineStageFlags,
+        RenderPassCreateInfo, SampleCountFlags, SubpassDependency, SubpassDescription,
+        SUBPASS_EXTERNAL,
     },
 };
 
@@ -33,9 +35,18 @@ impl RenderPass {
             .pipeline_bind_point(PipelineBindPoint::GRAPHICS)
             .color_attachments(&attachment_reference)];
 
+        let dependencies = [SubpassDependency::default()
+            .src_subpass(SUBPASS_EXTERNAL)
+            .dst_subpass(0)
+            .src_stage_mask(PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+            .src_access_mask(Default::default())
+            .dst_stage_mask(PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+            .dst_access_mask(AccessFlags::COLOR_ATTACHMENT_WRITE)];
+
         let render_pass_info = RenderPassCreateInfo::default()
             .attachments(&attachment_description)
-            .subpasses(&subpass);
+            .subpasses(&subpass)
+            .dependencies(&dependencies);
 
         let render_pass = unsafe {
             swapchain
@@ -63,4 +74,15 @@ struct InnerRenderPass {
     render_pass: vk::RenderPass,
 
     swapchain: Swapchain,
+}
+
+impl Drop for InnerRenderPass {
+    fn drop(&mut self) {
+        unsafe {
+            self.swapchain
+                .device()
+                .device()
+                .destroy_render_pass(self.render_pass, None);
+        }
+    }
 }

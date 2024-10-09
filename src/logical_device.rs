@@ -55,6 +55,14 @@ impl LogicalDevice {
     pub fn device(&self) -> &Device {
         &self.0.device
     }
+
+    pub fn queue(&self) -> &Queue {
+        &self.0.queue
+    }
+
+    pub fn wait_idle(&self) -> VkResult<()> {
+        unsafe { self.0.device.device_wait_idle() }
+    }
 }
 
 fn create_queue_create_infos<'a>(

@@ -4,8 +4,9 @@ use ash::{
     khr::swapchain,
     prelude::VkResult,
     vk::{
-        CompositeAlphaFlagsKHR, Extent2D, Image, ImageUsageFlags, PresentModeKHR, SharingMode,
-        SurfaceFormatKHR, SwapchainCreateInfoKHR, SwapchainKHR,
+        CompositeAlphaFlagsKHR, Extent2D, Fence, Image, ImageUsageFlags, PresentInfoKHR,
+        PresentModeKHR, Semaphore, SharingMode, SurfaceFormatKHR, SwapchainCreateInfoKHR,
+        SwapchainKHR,
     },
 };
 
@@ -15,7 +16,7 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct Swapchain(#[allow(dead_code)] Rc<InnerSwapchain>);
+pub struct Swapchain(Rc<InnerSwapchain>);
 
 impl Swapchain {
     pub fn new(
@@ -103,6 +104,41 @@ impl Swapchain {
     pub fn device(&self) -> &LogicalDevice {
         &self.0.logical_device
     }
+
+    pub fn acquire_next_image(
+        &self,
+        timeout: u64,
+        semaphore: Option<Semaphore>,
+        fence: Option<Fence>,
+    ) -> VkResult<(u32, bool)> {
+        unsafe {
+            self.0.swapchain_instance.acquire_next_image(
+                self.0.swapchain,
+                timeout,
+                semaphore.unwrap_or(Semaphore::null()),
+                fence.unwrap_or(Fence::null()),
+            )
+        }
+    }
+
+    pub fn queue_present(
+        &self,
+        wait_semaphore: &[Semaphore],
+        image_index: &[u32],
+    ) -> VkResult<bool> {
+        let swapchains = [self.0.swapchain];
+
+        let present_info = PresentInfoKHR::default()
+            .wait_semaphores(wait_semaphore)
+            .swapchains(&swapchains)
+            .image_indices(image_index);
+
+        unsafe {
+            self.0
+                .swapchain_instance
+                .queue_present(*self.0.logical_device.queue(), &present_info)
+        }
+    }
 }
 
 struct InnerSwapchain {
@@ -110,6 +146,7 @@ struct InnerSwapchain {
     swapchain: SwapchainKHR,
     images: Vec<Image>,
     format: SurfaceFormatKHR,
+    logical_device: LogicalDevice,
 
     #[allow(dead_code)]
     present_mode: PresentModeKHR,
@@ -119,9 +156,6 @@ struct InnerSwapchain {
 
     #[allow(dead_code)]
     physical_device: PhysicalDevice,
-
-    #[allow(dead_code)]
-    logical_device: LogicalDevice,
 
     #[allow(dead_code)]
     surface: Surface,

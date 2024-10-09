@@ -42,6 +42,24 @@ impl CommandBuffers {
         })))
     }
 
+    pub fn command_buffers(&self) -> &[CommandBuffer] {
+        &self.0.command_buffers
+    }
+
+    pub fn reset(&self) -> VkResult<()> {
+        let command_buffer = self.0.command_buffers[0];
+
+        let command_buffer_reset_flags = Default::default();
+
+        unsafe {
+            self.0
+                .command_pool
+                .logical_device()
+                .device()
+                .reset_command_buffer(command_buffer, command_buffer_reset_flags)
+        }
+    }
+
     pub fn record(
         &self,
         command_buffer_index: usize,

@@ -37,10 +37,12 @@ impl Window {
         self.0.borrow().glfw.get_required_instance_extensions()
     }
 
-    pub fn run(&self) {
-        while !self.0.borrow().window.should_close() {
-            self.0.borrow_mut().glfw.poll_events();
-        }
+    pub fn should_close(&self) -> bool {
+        self.0.borrow().window.should_close()
+    }
+
+    pub fn poll_events(&self) {
+        self.0.borrow_mut().glfw.poll_events();
     }
 
     pub(crate) unsafe fn create_window_surface(&self, instance: Instance) -> VkResult<SurfaceKHR> {
