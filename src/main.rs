@@ -1,23 +1,31 @@
 use ash::{vk::make_api_version, Entry};
 use debug_layer::DebugLayer;
+use graphics_pipeline::GraphicsPipeline;
 use image_views::ImageViews;
 use instance::Instance;
 use logical_device::LogicalDevice;
 use physical_device::PhysicalDevice;
+use render_pass::RenderPass;
 use surface::Surface;
 use swapchain::Swapchain;
 use utils::{check_validation_layer_support, print_available_extensions};
 use window::Window;
 
-pub const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
+const VALIDATION_LAYERS: [&str; 1] = ["VK_LAYER_KHRONOS_validation"];
 
-pub const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
+const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
+
+const SHADER_VERT: &[u8; 1504] = include_bytes!("../shaders/vert.spv");
+const SHADER_FRAG: &[u8; 572] = include_bytes!("../shaders/frag.spv");
 
 mod debug_layer;
+mod graphics_pipeline;
 mod image_views;
 mod instance;
 mod logical_device;
 mod physical_device;
+mod render_pass;
+mod shader_module;
 mod surface;
 mod swapchain;
 mod utils;
@@ -51,6 +59,9 @@ struct HelloTriangleApplication {
 
     #[allow(dead_code)]
     image_views: ImageViews,
+
+    #[allow(dead_code)]
+    graphics_pipeline: GraphicsPipeline,
 }
 
 impl HelloTriangleApplication {
@@ -95,6 +106,10 @@ impl HelloTriangleApplication {
 
         let image_views = ImageViews::new(&swapchain, logical_device.clone()).unwrap();
 
+        let render_pass = RenderPass::new(swapchain.clone()).unwrap();
+
+        let graphics_pipeline = GraphicsPipeline::new(render_pass.clone()).unwrap();
+
         Self {
             window,
             instance,
@@ -104,6 +119,7 @@ impl HelloTriangleApplication {
             logical_device,
             swapchain,
             image_views,
+            graphics_pipeline,
         }
     }
 

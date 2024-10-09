@@ -95,6 +95,14 @@ impl Swapchain {
     pub fn format(&self) -> SurfaceFormatKHR {
         self.0.format
     }
+
+    pub fn extent(&self) -> Extent2D {
+        self.0.extent
+    }
+
+    pub fn device(&self) -> &LogicalDevice {
+        &self.0.logical_device
+    }
 }
 
 struct InnerSwapchain {
