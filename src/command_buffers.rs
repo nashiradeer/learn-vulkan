@@ -11,6 +11,7 @@ use ash::{
 
 use crate::{
     command_pool::CommandPool, framebuffers::Framebuffers, graphics_pipeline::GraphicsPipeline,
+    MAX_FRAMES_IN_FLIGHT,
 };
 
 #[derive(Clone)]
@@ -25,7 +26,7 @@ impl CommandBuffers {
         let command_buffer_alloc_info = CommandBufferAllocateInfo::default()
             .command_pool(*command_pool.command_pool())
             .level(CommandBufferLevel::PRIMARY)
-            .command_buffer_count(1);
+            .command_buffer_count(MAX_FRAMES_IN_FLIGHT as u32);
 
         let command_buffers = unsafe {
             command_pool

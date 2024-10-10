@@ -10,35 +10,43 @@ use crate::logical_device::LogicalDevice;
 pub struct SyncObjects(Rc<InnerSyncObjects>);
 
 impl SyncObjects {
-    pub fn new(logical_device: LogicalDevice) -> VkResult<Self> {
+    pub fn new(logical_device: LogicalDevice, count: usize) -> VkResult<Self> {
         let semaphore_info = SemaphoreCreateInfo::default();
-
-        let image_available_semaphore = unsafe {
-            logical_device
-                .device()
-                .create_semaphore(&semaphore_info, None)?
-        };
-
-        let render_finished_semaphore = unsafe {
-            logical_device
-                .device()
-                .create_semaphore(&semaphore_info, None)?
-        };
 
         let fence_info = FenceCreateInfo::default().flags(FenceCreateFlags::SIGNALED);
 
-        let in_flight_fence = unsafe { logical_device.device().create_fence(&fence_info, None)? };
+        let mut image_available_semaphores = Vec::with_capacity(count);
+        let mut render_finished_semaphores = Vec::with_capacity(count);
+        let mut in_flight_fences = Vec::with_capacity(count);
+
+        for _ in 0..=count {
+            unsafe {
+                image_available_semaphores.push(
+                    logical_device
+                        .device()
+                        .create_semaphore(&semaphore_info, None)?,
+                );
+
+                render_finished_semaphores.push(
+                    logical_device
+                        .device()
+                        .create_semaphore(&semaphore_info, None)?,
+                );
+
+                in_flight_fences.push(logical_device.device().create_fence(&fence_info, None)?);
+            }
+        }
 
         Ok(Self(Rc::new(InnerSyncObjects {
-            image_available_semaphore,
-            render_finished_semaphore,
-            in_flight_fence,
+            image_available_semaphores,
+            render_finished_semaphores,
+            in_flight_fences,
             logical_device,
         })))
     }
 
-    pub fn wait_in_flight_fence(&self) -> VkResult<()> {
-        let fences = [self.0.in_flight_fence];
+    pub fn wait_in_flight_fence(&self, index: usize) -> VkResult<()> {
+        let fences = [self.0.in_flight_fences[index]];
 
         unsafe {
             self.0
@@ -48,44 +56,50 @@ impl SyncObjects {
         }
     }
 
-    pub fn reset_in_flight_fence(&self) -> VkResult<()> {
-        let fences = [self.0.in_flight_fence];
+    pub fn reset_in_flight_fence(&self, index: usize) -> VkResult<()> {
+        let fences = [self.0.in_flight_fences[index]];
 
         unsafe { self.0.logical_device.device().reset_fences(&fences) }
     }
 
-    pub fn image_available_semaphore(&self) -> &Semaphore {
-        &self.0.image_available_semaphore
+    pub fn image_available_semaphore(&self, index: usize) -> &Semaphore {
+        &self.0.image_available_semaphores[index]
     }
 
-    pub fn render_finished_semaphore(&self) -> &Semaphore {
-        &self.0.render_finished_semaphore
+    pub fn render_finished_semaphore(&self, index: usize) -> &Semaphore {
+        &self.0.render_finished_semaphores[index]
     }
 
-    pub fn in_flight_fence(&self) -> &Fence {
-        &self.0.in_flight_fence
+    pub fn in_flight_fence(&self, index: usize) -> &Fence {
+        &self.0.in_flight_fences[index]
     }
 }
 
 struct InnerSyncObjects {
-    image_available_semaphore: Semaphore,
-    render_finished_semaphore: Semaphore,
-    in_flight_fence: Fence,
+    image_available_semaphores: Vec<Semaphore>,
+    render_finished_semaphores: Vec<Semaphore>,
+    in_flight_fences: Vec<Fence>,
     logical_device: LogicalDevice,
 }
 
 impl Drop for InnerSyncObjects {
     fn drop(&mut self) {
         unsafe {
-            self.logical_device
-                .device()
-                .destroy_semaphore(self.image_available_semaphore, None);
-            self.logical_device
-                .device()
-                .destroy_semaphore(self.render_finished_semaphore, None);
-            self.logical_device
-                .device()
-                .destroy_fence(self.in_flight_fence, None);
+            for semaphore in self.image_available_semaphores.iter() {
+                self.logical_device
+                    .device()
+                    .destroy_semaphore(*semaphore, None);
+            }
+
+            for semaphore in self.render_finished_semaphores.iter() {
+                self.logical_device
+                    .device()
+                    .destroy_semaphore(*semaphore, None);
+            }
+
+            for fence in self.in_flight_fences.iter() {
+                self.logical_device.device().destroy_fence(*fence, None);
+            }
         }
     }
 }

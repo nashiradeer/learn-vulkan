@@ -24,6 +24,7 @@ const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 
 const SHADER_VERT: &[u8; 1504] = include_bytes!("../shaders/vert.spv");
 const SHADER_FRAG: &[u8; 572] = include_bytes!("../shaders/frag.spv");
+const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
 mod command_buffers;
 mod command_pool;
@@ -53,6 +54,7 @@ struct HelloTriangleApplication {
     swapchain: Swapchain,
     command_buffers: CommandBuffers,
     sync_objects: SyncObjects,
+    current_frame: usize,
 
     #[allow(dead_code)]
     debug_layer: Option<DebugLayer>,
@@ -115,9 +117,10 @@ impl HelloTriangleApplication {
         )
         .unwrap();
 
-        let sync_objects = SyncObjects::new(logical_device.clone()).unwrap();
+        let sync_objects = SyncObjects::new(logical_device.clone(), MAX_FRAMES_IN_FLIGHT).unwrap();
 
         Self {
+            current_frame: 0,
             window,
             logical_device,
             swapchain,
@@ -128,15 +131,23 @@ impl HelloTriangleApplication {
     }
 
     pub fn draw_frame(&mut self) {
-        self.sync_objects.wait_in_flight_fence().unwrap();
+        self.sync_objects
+            .wait_in_flight_fence(self.current_frame)
+            .unwrap();
 
-        self.sync_objects.reset_in_flight_fence().unwrap();
+        self.sync_objects
+            .reset_in_flight_fence(self.current_frame)
+            .unwrap();
 
         let (image_index, _) = self
             .swapchain
             .acquire_next_image(
                 u64::MAX,
-                Some(*self.sync_objects.image_available_semaphore()),
+                Some(
+                    *self
+                        .sync_objects
+                        .image_available_semaphore(self.current_frame),
+                ),
                 None,
             )
             .unwrap();
@@ -147,8 +158,12 @@ impl HelloTriangleApplication {
             .record(0, image_index.try_into().unwrap(), 0, 0, 0)
             .unwrap();
 
-        let wait_semaphores = [*self.sync_objects.image_available_semaphore()];
-        let signal_semaphores = [*self.sync_objects.render_finished_semaphore()];
+        let wait_semaphores = [*self
+            .sync_objects
+            .image_available_semaphore(self.current_frame)];
+        let signal_semaphores = [*self
+            .sync_objects
+            .render_finished_semaphore(self.current_frame)];
 
         let wait_stages = [PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
 
@@ -166,7 +181,7 @@ impl HelloTriangleApplication {
                 .queue_submit(
                     *self.logical_device.queue(),
                     &submit_infos,
-                    *self.sync_objects.in_flight_fence(),
+                    *self.sync_objects.in_flight_fence(self.current_frame),
                 )
                 .unwrap();
         }
@@ -176,6 +191,8 @@ impl HelloTriangleApplication {
         self.swapchain
             .queue_present(&signal_semaphores, &image_indices)
             .unwrap();
+
+        self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     pub fn run(&mut self) {
