@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ash::{
     vk::{make_api_version, PipelineStageFlags, SubmitInfo},
     Entry,
@@ -26,6 +28,7 @@ const SHADER_VERT: &[u8; 1504] = include_bytes!("../shaders/vert.spv");
 const SHADER_FRAG: &[u8; 572] = include_bytes!("../shaders/frag.spv");
 const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
+mod api2;
 mod command_buffers;
 mod command_pool;
 mod debug_layer;
@@ -46,6 +49,64 @@ mod window;
 fn main() {
     let mut app = HelloTriangleApplication::new();
     app.run();
+}
+
+struct HelloTriangleApplication2 {
+    glfw_entry: api2::GlfwEntry,
+    window: api2::GlfwWindow<Rc<api2::Instance>>,
+    instance: Rc<api2::Instance>,
+}
+
+impl HelloTriangleApplication2 {
+    pub fn new() -> Self {
+        let mut glfw_entry = api2::GlfwEntry::new().unwrap();
+
+        let instance_builder = api2::InstanceBuilder::default()
+            .application_name("Hello Triangle")
+            .engine_name("No Engine")
+            .enable_debug_layer(true)
+            .extensions(glfw_entry.required_extensions().unwrap());
+
+        println!("Available extensions:");
+        instance_builder
+            .available_extensions()
+            .unwrap()
+            .iter()
+            .for_each(|v| {
+                if let Ok(extension) = v.to_str() {
+                    println!("    {}", extension);
+                }
+            });
+
+        println!("Available layers:");
+        instance_builder
+            .available_layers()
+            .unwrap()
+            .iter()
+            .for_each(|v| {
+                if let Ok(layer) = v.to_str() {
+                    println!("    {}", layer);
+                }
+            });
+
+        let instance = Rc::new(instance_builder.build().unwrap());
+
+        let window = glfw_entry
+            .create_window(
+                instance.clone(),
+                "Hello Triangle",
+                800,
+                600,
+                glfw::WindowMode::Windowed,
+            )
+            .unwrap();
+
+        Self {
+            glfw_entry,
+            window,
+            instance,
+        }
+    }
 }
 
 struct HelloTriangleApplication {
