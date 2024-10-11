@@ -3,7 +3,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     error,
-    ffi::{c_char, CString, FromBytesUntilNulError, NulError},
+    ffi::{c_char, CStr, CString, FromBytesUntilNulError, NulError},
     fmt,
     ops::{Deref, DerefMut},
 };
@@ -88,6 +88,22 @@ impl BorrowMut<Vec<CString>> for Extensions {
 impl From<Vec<CString>> for Extensions {
     fn from(value: Vec<CString>) -> Self {
         Self { extensions: value }
+    }
+}
+
+impl<const N: usize> From<[CString; N]> for Extensions {
+    fn from(value: [CString; N]) -> Self {
+        Self {
+            extensions: value.to_vec(),
+        }
+    }
+}
+
+impl<const N: usize> From<[&CStr; N]> for Extensions {
+    fn from(value: [&CStr; N]) -> Self {
+        Self {
+            extensions: value.into_iter().map(CString::from).collect(),
+        }
     }
 }
 
