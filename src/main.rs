@@ -55,6 +55,7 @@ struct HelloTriangleApplication2 {
     glfw_entry: api2::GlfwEntry,
     window: api2::GlfwWindow<Rc<api2::Instance>>,
     instance: Rc<api2::Instance>,
+    device: Rc<api2::Device<Rc<api2::Instance>>>,
 }
 
 impl HelloTriangleApplication2 {
@@ -101,10 +102,22 @@ impl HelloTriangleApplication2 {
             )
             .unwrap();
 
+        let device_extensions = api2::Extensions::default();
+        let device = Rc::new(
+            api2::Device::new(
+                instance.clone(),
+                &device_extensions,
+                &window.surface_instance,
+                window.surface,
+            )
+            .unwrap(),
+        );
+
         Self {
             glfw_entry,
             window,
             instance,
+            device,
         }
     }
 }
