@@ -15,6 +15,7 @@ impl From<VkResult> for Error {
 
 impl Display for Error {
     #[allow(non_snake_case)]
+    #[allow(non_upper_case_globals)]
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self.0 {
             VkResult_VK_SUCCESS => write!(f, "VkResult::VK_SUCCESS"),
