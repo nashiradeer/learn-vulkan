@@ -1,0 +1,17 @@
+{
+  "cSpell.words": [
+    "bindgen",
+    "dylib",
+    "HINSTANCE",
+    "HREDRAW",
+    "hwnd",
+    "lpfn",
+    "lpsz",
+    "OVERLAPPEDWINDOW",
+    "rustc",
+    "USEDEFAULT",
+    "VREDRAW",
+    "vulkan",
+    "WNDCLASSA"
+  ]
+}
