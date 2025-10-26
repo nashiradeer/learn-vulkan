@@ -20,26 +20,28 @@ fn main() {
 
     println!("cargo::rustc-link-lib={}=vulkan-1", link_kind);
 
-    let mut bindings_builder = bindgen::Builder::default()
+    let mut vulkan_bindings_builder = bindgen::Builder::default()
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     if cfg!(target_os = "windows") {
-        bindings_builder = bindings_builder.clang_arg(format!(
-            "-I{}/Include",
-            vulkan_sdk_path
-                .as_ref()
-                .expect("On Windows, VULKAN_SDK environment variable must be set")
-        ));
+        vulkan_bindings_builder = vulkan_bindings_builder
+            .clang_arg(format!(
+                "-I{}/Include",
+                vulkan_sdk_path
+                    .as_ref()
+                    .expect("On Windows, VULKAN_SDK environment variable must be set")
+            ))
+            .clang_arg("-DVK_USE_PLATFORM_WIN32_KHR");
     }
 
-    let bindings = bindings_builder
+    let vulkan_bindings = vulkan_bindings_builder
         .generate()
-        .expect("Unable to generate bindings");
+        .expect("Unable to generate bindings for Vulkan API");
 
     let output_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    bindings
-        .write_to_file(output_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+    vulkan_bindings
+        .write_to_file(output_path.join("vulkan_bindings.rs"))
+        .expect("Couldn't write bindings for Vulkan API!");
 }
